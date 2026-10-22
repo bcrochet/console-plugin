@@ -66,7 +66,7 @@ beforeEach(() => {
 });
 
 describe('DemosPage', () => {
-  it('shows the three interaction types and the cookbook pages', () => {
+  it('shows all demo cards', () => {
     render(
       <MemoryRouter>
         <DemosPage />
@@ -77,6 +77,7 @@ describe('DemosPage', () => {
     expect(screen.getByText('How-to Use Demos')).toBeInTheDocument();
     expect(screen.getByText('Creating Virtual Machines')).toBeInTheDocument();
     expect(screen.getByText('Custom VM Templates')).toBeInTheDocument();
+    expect(screen.getByText('Cloning Virtual Machines')).toBeInTheDocument();
     expect(screen.getByText('VM Instancetypes & Preferences')).toBeInTheDocument();
     expect(screen.getByText('Install and configure OpenShift Virtualization')).toBeInTheDocument();
     expect(screen.getByText('Create a VM from the web console')).toBeInTheDocument();
@@ -184,10 +185,11 @@ describe('DemosPage', () => {
     );
     const search = screen.getByRole('textbox', { name: 'Search demos' });
     fireEvent.change(search, { target: { value: 'guided walkthrough' } });
-    expect(screen.getAllByTestId(/^card-(?!action)/)).toHaveLength(3);
+    expect(screen.getAllByTestId(/^card-(?!action)/)).toHaveLength(4);
     expect(screen.getByText('VM Instancetypes & Preferences')).toBeInTheDocument();
     expect(screen.getByText('Create a VM from the web console')).toBeInTheDocument();
     expect(screen.getByText('Create custom VM templates')).toBeInTheDocument();
+    expect(screen.getByText('Cloning Virtual Machines')).toBeInTheDocument();
     fireEvent.change(search, { target: { value: 'no matching demo' } });
     expect(screen.getByText('No demos match your filters')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('clear-filters'));
