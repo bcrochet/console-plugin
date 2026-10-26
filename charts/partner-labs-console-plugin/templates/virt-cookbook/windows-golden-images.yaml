@@ -39,8 +39,8 @@ spec:
   prerequisites:
     - "OpenShift with OpenShift Virtualization and OpenShift Pipelines installed, and the Tekton hub resolver enabled"
     - "An existing AWS OpenShift cluster with virtualization-capable amd64 workers, the u1.large instancetype, and the windows.2k25.virtio preference"
-    - "A default StorageClass suitable for VM disks and filesystem PVCs, with capacity for a 60 GiB golden disk, a 60 GiB clone, and temporary ISO storage; the ISO task also needs up to 24 GiB of node ephemeral storage"
-    - "Permission to create a dedicated project and its resources; an administrator must grant the builder service account project access and the anyuid SCC"
+    - "A default StorageClass suitable for VM disks and filesystem PVCs, with capacity for the published pipeline's 20 GiB golden disk, a 60 GiB clone, and temporary ISO storage; the ISO task also needs up to 24 GiB of node ephemeral storage"
+    - "Permission to create a dedicated project and its resources; an administrator must grant the builder service account project access and the nonroot-v2 SCC"
     - "An authenticated oc CLI, Bash, and a text editor; Run controls require Web Terminal"
     - "An approved English (United States), x64 Windows Server 2025 ISO URL and access to the applicable Microsoft license terms"
     - "Cluster access to the ISO URL, Artifact Hub, GitHub, and the pipeline task images, including authenticated pulls from registry.redhat.io"
@@ -69,11 +69,19 @@ spec:
         oc get virtualmachineclusterinstancetype u1.large
         oc get virtualmachineclusterpreference windows.2k25.virtio
         oc get storageclass
+        oc get storageprofile
         ```{{"{{execute}}"}}
 
         Stop if a prerequisite is missing. Have an administrator prepare the
         cluster before continuing. For AWS, use workers already configured to
         run OpenShift Virtualization; ordinary worker capacity alone is not enough.
+
+        Inspect the default StorageClass's StorageProfile. Its
+        `status.claimPropertySets` must include an access mode for `Filesystem`,
+        which the pipeline uses for its ISO volume, as well as the default VM
+        disk mode. If the filesystem entry is missing, ask a storage administrator
+        to configure the profile before continuing. A block-only profile can
+        leave the ISO DataVolume pending with `no matching accessMode`.
 
         Create a new tutorial project:
 
@@ -88,12 +96,13 @@ spec:
         `oc create serviceaccount windows-image-builder -n windows-golden-images`{{"{{execute}}"}}
 
         Ask an administrator to run these grants. The edit role lets the
-        pipeline manage resources only in this tutorial project. The anyuid
-        SCC permits the ISO modification task to use UID and group 107:
+        pipeline manage resources only in this tutorial project. The nonroot-v2
+        SCC permits the ISO modification task to use UID and group 107 with
+        its required RuntimeDefault seccomp profile:
 
         ```
         oc adm policy add-role-to-user edit -z windows-image-builder -n windows-golden-images
-        oc adm policy add-scc-to-user anyuid -z windows-image-builder -n windows-golden-images
+        oc adm policy add-scc-to-user nonroot-v2 -z windows-image-builder -n windows-golden-images
         ```{{"{{execute}}"}}
 
         The builder account and VM launcher must also be able to pull the
@@ -114,10 +123,14 @@ spec:
         from the cluster, not the registration page. Refresh an expired link
         if downloads fail. Review the media's license and evaluation limits.
 
-        Copy the following into `configmap-windows2k25-autounattend.yaml`.
+        Copy the following into `configmap-windows2k25-golden-autounattend.yaml`.
         It loads the `2k25` VirtIO drivers, partitions the disk, selects the
         Server 2025 Datacenter image, enters Audit mode, installs the guest
         agent, and generalizes the installation before shutdown.
+
+        Keep this distinct ConfigMap name: the pipeline imports its own
+        `windows2k25-autounattend` ConfigMap and would overwrite an answer
+        file using that name.
 
         **Review the applicable Microsoft terms yourself. Only if you accept
         them, change `<AcceptEula>false</AcceptEula>` to
@@ -128,7 +141,7 @@ spec:
         apiVersion: v1
         kind: ConfigMap
         metadata:
-          name: windows2k25-autounattend
+          name: windows2k25-golden-autounattend
           namespace: windows-golden-images
         data:
           autounattend.xml: |
@@ -277,8 +290,8 @@ spec:
         Validate and create the edited ConfigMap:
 
         ```
-        oc create --dry-run=server -n windows-golden-images -f configmap-windows2k25-autounattend.yaml
-        oc create -n windows-golden-images -f configmap-windows2k25-autounattend.yaml
+        oc create --dry-run=server -n windows-golden-images -f configmap-windows2k25-golden-autounattend.yaml
+        oc create -n windows-golden-images -f configmap-windows2k25-golden-autounattend.yaml
         ```{{"{{execute}}"}}
       review:
         instructions: "Do you have a reachable ISO URL and a ConfigMap containing both reviewed answer-file keys?"
@@ -311,7 +324,7 @@ spec:
           - name: preferenceName
             value: windows.2k25.virtio
           - name: autounattendConfigMapName
-            value: windows2k25-autounattend
+            value: windows2k25-golden-autounattend
           - name: baseDvName
             value: win2k25
           - name: isoDVName
@@ -391,8 +404,10 @@ spec:
         XML-escape special characters, for example `&` as `&amp;` and `<` as
         `&lt;`. Keep the file out of source control and shared logs.
 
-        This file sets `WIN-SERVER-01`, extends the OS partition, and completes
-        first-boot setup. Unlike the installation file, its key is
+        This file sets `WIN-SERVER-01`, requests OS partition expansion, and
+        supplies first-boot settings. Expansion depends on the disk layout;
+        a recovery partition after C: can prevent it. Unlike the installation
+        file, its key is
         **unattend.xml**, not **autounattend.xml**. This focused example uses
         Console VNC access and does not configure automatic login or publish RDP.
 
@@ -545,7 +560,19 @@ spec:
         with the password you chose. Run `hostname` in the guest's command
         prompt or PowerShell; expect `WIN-SERVER-01`.
 
-        If the OOBE wizard appears, check the Secret reference and the
+        Windows may ask for a diagnostic-data preference at first login.
+        Review that choice according to your organization's policy.
+
+        Open **Disk Management** inside Windows and verify the disk and C:
+        sizes separately. A 60 GiB cloned disk does not guarantee a 60 GiB C:
+        partition. With the tested Windows Server 2025 evaluation media, C:
+        remained about 19 GiB because a recovery partition separated it from
+        the extra space. Review Microsoft's [volume expansion guidance](https://learn.microsoft.com/en-us/windows-server/storage/disk-management/extend-a-basic-volume)
+        before changing the partition layout; this walkthrough preserves the
+        cookbook's disk configuration.
+
+        If Windows asks you to set the Administrator password or other settings
+        supplied by the answer file, check the Secret reference and the
         `unattend.xml` key. If guest OS information stays empty, check the QEMU
         Guest Agent service inside Windows and the installer task's driver logs.
       review:
@@ -581,7 +608,7 @@ spec:
         An administrator can revoke the tutorial account's grants:
 
         ```
-        oc adm policy remove-scc-from-user anyuid -z windows-image-builder -n windows-golden-images
+        oc adm policy remove-scc-from-user nonroot-v2 -z windows-image-builder -n windows-golden-images
         oc adm policy remove-role-from-user edit -z windows-image-builder -n windows-golden-images
         ```{{"{{execute}}"}}
 

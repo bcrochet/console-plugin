@@ -37,6 +37,8 @@ plugin:
   quickStarts:
     windows-golden-images:
       enabled: true
+    vm-ingress-routes:
+      enabled: true
     install-configure-ocpv-operator:
       enabled: true
     vm-templates:
@@ -44,6 +46,10 @@ plugin:
     create-vm-web-console:
       enabled: true
     vm-instancetypes-and-preferences:
+      enabled: true
+    vm-lifecycle-states:
+      enabled: true
+    cloning-vms:
       enabled: true
   jobs:
     patchConsoles:

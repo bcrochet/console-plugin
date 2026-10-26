@@ -137,6 +137,24 @@ test.describe('Console plugin cards', () => {
     await expect(page.getByText('Prepare a dedicated project', { exact: true })).toBeVisible();
   });
 
+  test('opens the VM ingress routes quick start', async ({ page }) => {
+    await page.goto('/partner-labs-demos');
+    await page.getByTestId('card-action-vm-ingress-routes').click();
+    await expect(
+      page.getByRole('heading', { name: 'Expose a VM with an HTTPS Route', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Create a dedicated test project', { exact: true })).toBeVisible();
+  });
+
+  test('opens the VM lifecycle states quick start', async ({ page }) => {
+    await page.goto('/partner-labs-demos');
+    await page.getByTestId('card-action-vm-lifecycle-states').click();
+    await expect(
+      page.getByRole('heading', { name: 'Understanding VM lifecycle states', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Understand VM and VMI resources', { exact: true })).toBeVisible();
+  });
+
   test('opens the custom VM templates quick start', async ({ page }) => {
     await page.goto('/partner-labs-demos');
     await page.getByTestId('card-action-vm-templates').click();
