@@ -625,7 +625,7 @@ spec:
         Also remove your local `unattend.xml` and any files containing private
         ISO URLs or generated credentials when they are no longer needed.
       review:
-        instructions: "Did you deliberately retain the image and stop the clone, or revoke the grants and verify the dedicated project's deletion?"
+        instructions: "Have you verified your chosen outcome: a stopped test clone if retaining the image, or revoked grants and a deleted project if cleaning up?"
         failedTaskHelp: "Review active runs and disk ownership before deletion. If the project remains Terminating, ask an administrator to inspect it rather than forcing finalizer removal."
       summary:
         success: "You chose how to retain or remove the image, clone, and tutorial access."
