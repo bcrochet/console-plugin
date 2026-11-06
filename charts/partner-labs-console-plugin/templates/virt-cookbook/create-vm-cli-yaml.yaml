@@ -53,9 +53,9 @@ spec:
 
         ```
         virtctl create vm --name=demo-vm \
-          --volume-import type:ds,src:openshift-virtualization-os-images/fedora \
-          --memory=2Gi \
-          --user=cloud-user \
+          --volume-import type:ds,src:openshift-virtualization-os-images/fedora \\
+          --memory=2Gi \\
+          --user=cloud-user \\
           --ssh-key="$(cat ~/.ssh/id_ed25519.pub)" > demo-vm.yaml
         ```{{"{{copy}}"}}
 
