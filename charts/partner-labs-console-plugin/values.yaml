@@ -35,6 +35,8 @@ plugin:
     annotations: {}
     name: ""
   quickStarts:
+    windows-golden-images:
+      enabled: true
     network-policies-vms:
       enabled: true
     virtctl-basics:
