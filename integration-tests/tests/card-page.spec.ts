@@ -197,7 +197,7 @@ test.describe('Console plugin cards', () => {
       page.getByText('Create a project and verify the boot source', { exact: true }),
     ).toBeVisible();
   });
-      
+
   test('opens the virtctl basics quick start', async ({ page }) => {
     await page.goto('/partner-labs-demos');
     await page.getByTestId('card-action-virtctl-basics').click();
