@@ -35,7 +35,11 @@ plugin:
     annotations: {}
     name: ""
   quickStarts:
+    windows-golden-images:
+      enabled: true
     network-policies-vms:
+      enabled: true
+    virtctl-basics:
       enabled: true
     vm-ingress-routes:
       enabled: true
@@ -56,6 +60,8 @@ plugin:
     vm-lifecycle-states:
       enabled: true
     cloning-vms:
+      enabled: true
+    cloud-init-fundamentals:
       enabled: true
   jobs:
     patchConsoles:

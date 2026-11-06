@@ -128,6 +128,15 @@ test.describe('Console plugin cards', () => {
     await expect(page.getByText('Open OperatorHub', { exact: true })).toBeVisible();
   });
 
+  test('opens the Windows golden images quick start', async ({ page }) => {
+    await page.goto('/partner-labs-demos');
+    await page.getByTestId('card-action-windows-golden-images').click();
+    await expect(
+      page.getByRole('heading', { name: 'Create Windows golden images', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Prepare a dedicated project', { exact: true })).toBeVisible();
+  });
+
   test('opens the VM ingress routes quick start', async ({ page }) => {
     await page.goto('/partner-labs-demos');
     await page.getByTestId('card-action-vm-ingress-routes').click();
@@ -188,6 +197,15 @@ test.describe('Console plugin cards', () => {
       page.getByText('Create a project and verify the boot source', { exact: true }),
     ).toBeVisible();
   });
+      
+  test('opens the virtctl basics quick start', async ({ page }) => {
+    await page.goto('/partner-labs-demos');
+    await page.getByTestId('card-action-virtctl-basics').click();
+    await expect(
+      page.getByRole('heading', { name: 'Using virtctl for VM management', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Install virtctl', { exact: true })).toBeVisible();
+  });
 
   test('opens the custom VM templates quick start', async ({ page }) => {
     await page.goto('/partner-labs-demos');
@@ -196,5 +214,14 @@ test.describe('Console plugin cards', () => {
       page.getByRole('heading', { name: 'Create custom VM templates', exact: true }),
     ).toBeVisible();
     await expect(page.getByText('Inspect a supplied VM template', { exact: true })).toBeVisible();
+  });
+
+  test('opens the Cloud-init Fundamentals quick start', async ({ page }) => {
+    await page.goto('/partner-labs-demos');
+    await page.getByTestId('card-action-cloud-init-fundamentals').click();
+    await expect(
+      page.getByRole('heading', { name: 'Cloud-init Fundamentals', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('Check the Fedora boot source')).toBeVisible();
   });
 });
